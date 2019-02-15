@@ -93,7 +93,7 @@ static void send_json_event_data() {
     }
     strncat(json_data, "}", STR_FREE_SPACE(json_data));
 
-    puts(json_data);
+    fputs(json_data, stdout);
 }
 
 static void receive_events(struct libevdev_uinput *controller) {
@@ -115,6 +115,9 @@ int main() {
     if (getenv("REMOTE_ADDR") == NULL) {
         exit(EXIT_FAILURE);
     }
+
+    setbuf(stdin, NULL);
+    setbuf(stdout, NULL);
 
     struct libevdev_uinput *controller = controller_create();
     send_json_event_data();
