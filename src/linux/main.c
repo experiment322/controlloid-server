@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <libevdev/libevdev.h>
 #include <libevdev/libevdev-uinput.h>
 
@@ -40,6 +41,8 @@ static const struct controller_event REGISTERED_EVENTS[] = {
         {.type=EV_KEY, .code=BTN_SELECT, .name="SELECT"},
         {.type=EV_KEY, .code=BTN_START, .name="START"},
 };
+
+struct libevdev_uinput *controller = NULL;
 
 static struct libevdev_uinput *controller_create() {
     struct libevdev *device = libevdev_new();
@@ -82,21 +85,21 @@ static void controller_destroy(struct libevdev_uinput *controller) {
     libevdev_uinput_destroy(controller);
 }
 
-static void send_json_event_data() {
+static void send_events_mapping() {
+    char json_entry[BUFFER_SIZE] = {0};
     char json_data[BUFFER_SIZE * ARR_LENGTH(REGISTERED_EVENTS)] = {0};
 
     strncat(json_data, "{", STR_FREE_SPACE(json_data));
     for (int i = 0; i < ARR_LENGTH(REGISTERED_EVENTS); ++i) {
-        char entry[BUFFER_SIZE] = {0};
-        snprintf(entry, sizeof(entry), "%s\"%s\":%d", i ? "," : "", REGISTERED_EVENTS[i].name, i);
-        strncat(json_data, entry, STR_FREE_SPACE(json_data));
+        snprintf(json_entry, sizeof(json_entry), "%s\"%s\":%d", i ? "," : "", REGISTERED_EVENTS[i].name, i);
+        strncat(json_data, json_entry, STR_FREE_SPACE(json_data));
     }
     strncat(json_data, "}", STR_FREE_SPACE(json_data));
 
     fputs(json_data, stdout);
 }
 
-static void receive_events(struct libevdev_uinput *controller) {
+static void receive_events() {
     short int event_index;
     short int event_value;
     for (;;) {
@@ -111,18 +114,33 @@ static void receive_events(struct libevdev_uinput *controller) {
     }
 }
 
+static void int_handler(int signal) {
+    fprintf(stderr, "signal(%d): halting execution...\n", signal);
+    controller_destroy(controller);
+    fclose(stdout);
+    fclose(stdin);
+
+    exit(EXIT_SUCCESS);
+}
+
 int main() {
+    setbuf(stdin, NULL);
+    setbuf(stdout, NULL);
+    signal(SIGINT, int_handler);
+
     if (getenv("REMOTE_ADDR") == NULL) {
+        fputs("error: environment variable REMOTE_ADDR not found\n", stderr);
         exit(EXIT_FAILURE);
     }
 
-    setbuf(stdin, NULL);
-    setbuf(stdout, NULL);
+    controller = controller_create();
+    if (controller == NULL) {
+        fputs("error: failed to create virtual controller\n", stderr);
+        exit(EXIT_FAILURE);
+    }
 
-    struct libevdev_uinput *controller = controller_create();
-    send_json_event_data();
-    receive_events(controller);
-    controller_destroy(controller);
+    send_events_mapping();
+    receive_events();
 
     return 0;
 }
