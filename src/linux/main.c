@@ -42,7 +42,7 @@ static const struct controller_event REGISTERED_EVENTS[] = {
         {.type=EV_KEY, .code=BTN_START, .name="START"},
 };
 
-struct libevdev_uinput *controller = NULL;
+static struct libevdev_uinput *controller = NULL;
 
 static struct libevdev_uinput *controller_create() {
     struct libevdev *device = libevdev_new();
