@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <libevdev/libevdev.h>
 #include <libevdev/libevdev-uinput.h>
 
@@ -66,23 +65,19 @@ static struct libevdev_uinput *controller_create() {
         libevdev_enable_event_code(device, event_type, event_code, event_type == EV_ABS ? &absinfo : NULL);
     }
 
-    struct libevdev_uinput *controller = NULL;
-    libevdev_uinput_create_from_device(device, LIBEVDEV_UINPUT_OPEN_MANAGED, &controller);
+    struct libevdev_uinput *new_controller = NULL;
+    libevdev_uinput_create_from_device(device, LIBEVDEV_UINPUT_OPEN_MANAGED, &new_controller);
 
     libevdev_free(device);
 
-    return controller;
+    return new_controller;
 }
 
-static void controller_emit_event(struct libevdev_uinput *controller, int event_index, short int event_value) {
+static void controller_emit_event(int event_index, short int event_value) {
     unsigned int event_type = REGISTERED_EVENTS[event_index].type;
     unsigned int event_code = REGISTERED_EVENTS[event_index].code;
     libevdev_uinput_write_event(controller, event_type, event_code, event_value);
     libevdev_uinput_write_event(controller, EV_SYN, SYN_REPORT, 0);
-}
-
-static void controller_destroy(struct libevdev_uinput *controller) {
-    libevdev_uinput_destroy(controller);
 }
 
 static void send_events_mapping() {
@@ -103,44 +98,41 @@ static void receive_events() {
     short int event_index;
     short int event_value;
     for (;;) {
-        fread(&event_index, sizeof(event_index), 1, stdin);
-        fread(&event_value, sizeof(event_value), 1, stdin);
+        if (ferror(stdin) || feof(stdin)) {
+            break;
+        }
 
-        if (ferror(stdin)) break;
+        if (fread(&event_index, sizeof(event_index), 1, stdin) != 1 ||
+            fread(&event_value, sizeof(event_value), 1, stdin) != 1) {
+            continue;
+        }
 
         if (event_index >= 0 && event_index < ARR_LENGTH(REGISTERED_EVENTS)) {
-            controller_emit_event(controller, event_index, event_value);
+            controller_emit_event(event_index, event_value);
         }
     }
 }
 
-static void int_handler(int signal) {
-    fprintf(stderr, "signal(%d): halting execution...\n", signal);
-    controller_destroy(controller);
-    fclose(stdout);
-    fclose(stdin);
-
-    exit(EXIT_SUCCESS);
-}
-
 int main() {
-    setbuf(stdin, NULL);
     setbuf(stdout, NULL);
-    signal(SIGINT, int_handler);
+    setbuf(stderr, NULL);
+    freopen(NULL, "rb", stdin);
 
     if (getenv("REMOTE_ADDR") == NULL) {
-        fputs("error: environment variable REMOTE_ADDR not found\n", stderr);
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "error: environment variable REMOTE_ADDR not found\n");
+        return -1;
     }
 
     controller = controller_create();
     if (controller == NULL) {
-        fputs("error: failed to create virtual controller\n", stderr);
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "error: failed to create virtual controller\n");
+        return -1;
     }
 
     send_events_mapping();
     receive_events();
+
+    libevdev_uinput_destroy(controller);
 
     return 0;
 }
