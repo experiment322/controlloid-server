@@ -1,6 +1,6 @@
 @echo off
-
 cd "%~dp0"
+setlocal enabledelayedexpansion
 
 echo Installing vJoy driver...
 .\elevate.exe -wait .\vJoySetup.exe /silent
