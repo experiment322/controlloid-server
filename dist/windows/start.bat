@@ -3,12 +3,12 @@ cd "%~dp0"
 setlocal enabledelayedexpansion
 
 where /q /r "%programfiles%" vjoyconfig.exe 2> nul
-if %errorlevel% neq 0 start /wait cmd /c .\vjoy\setup.bat
+if %errorlevel% neq 0 .\vjoy\elevate.exe -wait cmd /c "%cd%\vjoy\setup.bat"
 
 echo Server addresses:
 for /f "skip=3 tokens=1,* delims=:" %%g in ('ipconfig') do (
 	for /f "tokens=*" %%f in ('echo %%g ^| findstr "^[a-z]"') do (
-		if not %%f  == "" (
+		if not "%%f"=="" (
 			set iface=%%f
 		)
 	)
