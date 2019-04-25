@@ -13,7 +13,10 @@ if "%programw6432%"=="" (
 )
 
 for /f "delims=" %%v in ('where /r "!programs!" vjoyconfig.exe') do (
-	for /l %%c in (1,1,16) do (
+	echo Resetting vJoy...
+	"%%v" -r
+
+	for /l %%c in (1,1,4) do (
 		echo Configuring controller %%c...
 		"%%v" %%c -f -a x y rx ry -b 16
 	)
