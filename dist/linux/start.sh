@@ -8,4 +8,4 @@ ip -4 -o addr show scope global | awk '{gsub(/\/.*/,"",$4); print $2, "http://"$
 echo ""
 
 echo "Starting server..."
-./websocketd/websocketd --binary --port 31415 ./bin/ws_handler
+./websocketd/websocketd --binary --port 31415 --staticdir=. ./bin/ws_handler

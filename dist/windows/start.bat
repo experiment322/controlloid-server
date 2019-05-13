@@ -23,5 +23,5 @@ for /f "skip=3 tokens=1,* delims=:" %%g in ('ipconfig') do (
 echo.
 
 echo Starting server...
-.\websocketd\websocketd.exe --binary --port 31415 .\bin\ws_handler.exe
+.\websocketd\websocketd.exe --binary --port 31415 --staticdir=. .\bin\ws_handler.exe
 echo.
