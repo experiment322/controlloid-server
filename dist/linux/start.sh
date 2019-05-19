@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+cd "$(dirname "${BASH_SOURCE[0]}")"
 
 LINK_FORMAT=$(printf '\e[34;4m')
 RESET_FORMAT=$(printf '\e[0m')
