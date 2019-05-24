@@ -1,5 +1,5 @@
 @echo off
-cd "%~dp0"
+cd /d "%~dp0"
 setlocal enabledelayedexpansion
 
 echo Installing vJoy driver...
