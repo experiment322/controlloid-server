@@ -14,8 +14,13 @@ This is the server for the [Controlloid](https://github.com/experiment322/contro
 * Done!
 
 ## Linux instructions
+##### A note about the `uinput` kernel module
+* The server uses the `uinput` kernel module to emulate real input
+* This kernel module is loaded automatically on most linux distros
+* If your linux distro doesn't load the module automatically then you need to load it manually (after every reboot) by running `sudo modprobe uinput`
+* If you want it to be loaded automatically, then follow this [guide for systemd distros](https://wiki.archlinux.org/index.php/Kernel_module#Automatic_module_loading_with_systemd) by replacing the module given in the example with `uinput`
 ##### Fixing `error: failed to create virtual controller`
 * This is caused by restrictive permissions on `/dev/uinput`
-* Go into `/dist/linux/udev` folder and run `sudo ./setup.sh $USER`
+* Go into the project `/dist/linux/udev` folder and run `sudo ./setup.sh $USER`
 * Wait for the script to finish, make sure that there were no errors and **reboot** the machine
 * Done!
